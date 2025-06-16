@@ -1,0 +1,11 @@
+<botcomponent schemaname="cr3f1_databricksGenieAgent.component.varGenieConvoId">
+  <componenttype>12</componenttype>
+  <description>Conversion Id from Genie conversation</description>
+  <iscustomizable>0</iscustomizable>
+  <name>varGenieConvoId</name>
+  <parentbotid>
+    <schemaname>cr3f1_databricksGenieAgent</schemaname>
+  </parentbotid>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+</botcomponent>

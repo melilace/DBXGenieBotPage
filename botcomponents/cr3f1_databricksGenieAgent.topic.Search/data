@@ -1,0 +1,69 @@
+kind: AdaptiveDialog
+beginDialog:
+  kind: OnUnknownIntent
+  id: main
+  priority: -1
+  actions:
+    - kind: ConditionGroup
+      id: conditionGroup_P5klc4
+      conditions:
+        - id: conditionItem_vTZaII
+          condition: =IsBlank(Global.varCopilotConvoId)
+          actions:
+            - kind: SetVariable
+              id: p6LEVi
+              displayName: Set varCopilotConvoId to Blank()
+              variable: Global.varCopilotConvoId
+              value: =System.Conversation.Id
+
+            - kind: SetVariable
+              id: T4dlTV
+              displayName: Set varGenieConvoId to Blank()
+              variable: Global.varGenieConvoId
+              value: =Blank()
+
+    - kind: SendActivity
+      id: AkG3UC
+      activity: |-
+        Got it, F1 fan! Asking Genie for you, one moment while AI does its thing!
+        Please note: this a preview feature and response duration may vary.
+
+    - kind: InvokeFlowAction
+      id: QRNkGv
+      input:
+        binding:
+          text: =System.Activity.Text
+          text_1: =Global.varGenieConvoId
+
+      output:
+        binding:
+          genie_conversation_id: Topic.GenieConversationId
+          genie_response: Topic.GenieResponse
+
+      flowId: f1f36ef7-d630-f011-8c4d-6045bdee8cad
+
+    - kind: SetVariable
+      id: setVariable_9zlrnw
+      displayName: Set Global.varGenieConvoId
+      variable: Global.varGenieConvoId
+      value: =Topic.GenieConversationId
+
+    - kind: InvokeAIBuilderModelAction
+      id: Uhq3JT
+      input:
+        binding:
+          GenieJSONResponse: =Topic.GenieResponse
+          UserPrompt: =System.Activity.Text
+
+      output:
+        binding:
+          predictionOutput: Topic.varAIPromptResponse
+
+      aIModelId: 61719243-21c8-4121-aa4b-dbc3b80fe90c
+
+    - kind: SendActivity
+      id: PnjBHz
+      activity: "{Topic.varAIPromptResponse.text}"
+
+    - kind: EndDialog
+      id: A31fZz

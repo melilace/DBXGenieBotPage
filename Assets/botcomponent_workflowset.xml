@@ -1,0 +1,5 @@
+<botcomponent_workflowset>
+  <botcomponent_workflow botcomponentid.schemaname="cr3f1_databricksGenieAgent.topic.Search" workflowid.workflowid="f1f36ef7-d630-f011-8c4d-6045bdee8cad">
+    <iscustomizable>1</iscustomizable>
+  </botcomponent_workflow>
+</botcomponent_workflowset>

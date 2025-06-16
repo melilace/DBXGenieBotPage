@@ -1,0 +1,6 @@
+kind: Variable
+name: varGenieConvoId
+scope: Conversation
+isExternalInitializationAllowed: false
+initializationTimeoutInMilliseconds: 0
+aIVisibility: Hidden

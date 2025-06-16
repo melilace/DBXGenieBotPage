@@ -1,0 +1,5 @@
+<botcomponent_msdyn_aimodelset>
+  <botcomponent_msdyn_aimodel botcomponentid.schemaname="cr3f1_databricksGenieAgent.topic.Search" msdyn_aimodelid.msdyn_aimodelid="61719243-21c8-4121-aa4b-dbc3b80fe90c">
+    <iscustomizable>1</iscustomizable>
+  </botcomponent_msdyn_aimodel>
+</botcomponent_msdyn_aimodelset>

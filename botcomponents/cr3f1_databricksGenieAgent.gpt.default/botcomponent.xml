@@ -1,0 +1,11 @@
+<botcomponent schemaname="cr3f1_databricksGenieAgent.gpt.default">
+  <componenttype>15</componenttype>
+  <description>This agent provides information on all things about F1 races and drivers !</description>
+  <iscustomizable>0</iscustomizable>
+  <name>F1 Racing Agent</name>
+  <parentbotid>
+    <schemaname>cr3f1_databricksGenieAgent</schemaname>
+  </parentbotid>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+</botcomponent>

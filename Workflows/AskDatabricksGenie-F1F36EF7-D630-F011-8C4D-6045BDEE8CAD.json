@@ -1,0 +1,769 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "Genie Space Id (veh_GenieSpaceId)": {
+          "defaultValue": "01f032919f9f1917a3bd0991448dd756",
+          "type": "String",
+          "metadata": {
+            "schemaName": "veh_GenieSpaceId",
+            "description": "Genie Space Id"
+          }
+        },
+        "Genie Base Url (veh_GenieBaseUrl)": {
+          "defaultValue": "adb-1640284889362556.16.azuredatabricks.net",
+          "type": "String",
+          "metadata": {
+            "schemaName": "veh_GenieBaseUrl"
+          }
+        },
+        "Genie Bearer (veh_GenieBearer)": {
+          "defaultValue": "dapi63eaffc978d70361c82af4613a7e3aea-3",
+          "type": "String",
+          "metadata": {
+            "schemaName": "veh_GenieBearer",
+            "description": "Genie Bearer"
+          }
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Skills",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "description": "The Prompt from the user.",
+                  "title": "Utterance",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "text_1": {
+                  "title": "Genie Convo Id",
+                  "type": "string",
+                  "x-ms-dynamically-added": true,
+                  "description": "Conversation Id from existing Genie Convo (blank if none)",
+                  "x-ms-content-hint": "TEXT"
+                }
+              },
+              "required": [
+                "text",
+                "text_1"
+              ]
+            }
+          },
+          "metadata": {
+            "operationMetadataId": "a13beb8d-31cc-440c-ad5e-775ed8ab36b0"
+          }
+        }
+      },
+      "actions": {
+        "Do_until_Genie_responds": {
+          "type": "Until",
+          "expression": "@equals(variables('varGenieResponseStatus'),'COMPLETED')",
+          "limit": {
+            "count": 60,
+            "timeout": "PT1H"
+          },
+          "actions": {
+            "HTTP-Check_for_Genie_Response": {
+              "type": "Http",
+              "inputs": {
+                "uri": "https://adb-1640284889362556.16.azuredatabricks.net/api/2.0/genie/spaces/01f032919f9f1917a3bd0991448dd756/conversations/@{variables('varGenieConvoId')}/messages/@{variables('varGenieMessageId')}",
+                "method": "GET",
+                "headers": {
+                  "Authorization": "Bearer @{parameters('Genie Bearer (veh_GenieBearer)')}",
+                  "Content-Type": "application/json"
+                },
+                "queries": {
+                  "title": "hello"
+                }
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              },
+              "metadata": {
+                "operationMetadataId": "900b469e-92b7-4389-ba25-d8921cd499c0"
+              }
+            },
+            "Delay_3_seconds": {
+              "type": "Wait",
+              "inputs": {
+                "interval": {
+                  "count": 3,
+                  "unit": "Second"
+                }
+              },
+              "runAfter": {
+                "Set_variable_varGenieResponseStatus": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "9867f2c1-3f1a-4317-96af-9f38a0975546"
+              }
+            },
+            "Parse_JSON_Genie_Response": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('HTTP-Check_for_Genie_Response')",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "space_id": {
+                      "type": "string"
+                    },
+                    "conversation_id": {
+                      "type": "string"
+                    },
+                    "user_id": {
+                      "type": "integer"
+                    },
+                    "created_timestamp": {
+                      "type": "integer"
+                    },
+                    "last_updated_timestamp": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    },
+                    "attachments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "query": {
+                            "type": "object",
+                            "properties": {
+                              "query": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "statement_id": {
+                                "type": "string"
+                              },
+                              "query_result_metadata": {
+                                "type": "object",
+                                "properties": {
+                                  "row_count": {
+                                    "type": "integer"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "attachment_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "query",
+                          "attachment_id"
+                        ]
+                      }
+                    },
+                    "query_result": {
+                      "type": "object",
+                      "properties": {
+                        "statement_id": {
+                          "type": "string"
+                        },
+                        "row_count": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "auto_regenerate_count": {
+                      "type": "integer"
+                    },
+                    "message_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "HTTP-Check_for_Genie_Response": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "69282aa0-3f6d-4390-9f4c-4ad135039fad"
+              }
+            },
+            "Set_variable_varGenieResponseStatus": {
+              "type": "SetVariable",
+              "inputs": {
+                "name": "varGenieResponseStatus",
+                "value": "@body('Parse_JSON_Genie_Response')?['status']"
+              },
+              "runAfter": {
+                "Parse_JSON_Genie_Response": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "d3486be0-259e-4258-839f-76425f45fd98"
+              }
+            }
+          },
+          "runAfter": {
+            "Condition_Genie_Convo_Id_is_Null": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "3e142622-ab91-46ed-82b2-5df42a7f747b"
+          }
+        },
+        "Parse_JSON_Genie_Completed": {
+          "type": "ParseJson",
+          "inputs": {
+            "content": "@body('HTTP-Check_for_Genie_Response')",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "space_id": {
+                  "type": "string"
+                },
+                "conversation_id": {
+                  "type": "string"
+                },
+                "user_id": {
+                  "type": "integer"
+                },
+                "created_timestamp": {
+                  "type": "integer"
+                },
+                "last_updated_timestamp": {
+                  "type": "integer"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "attachments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "object",
+                        "properties": {
+                          "query": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "statement_id": {
+                            "type": "string"
+                          },
+                          "query_result_metadata": {
+                            "type": "object",
+                            "properties": {
+                              "row_count": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "attachment_id": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "query",
+                      "attachment_id"
+                    ]
+                  }
+                },
+                "query_result": {
+                  "type": "object",
+                  "properties": {
+                    "statement_id": {
+                      "type": "string"
+                    },
+                    "row_count": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "auto_regenerate_count": {
+                  "type": "integer"
+                },
+                "message_id": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Do_until_Genie_responds": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "3aeaf3d6-5710-4623-9bbb-9c9e7c1df3b4"
+          }
+        },
+        "For_each": {
+          "type": "Foreach",
+          "foreach": "@outputs('Parse_JSON_Genie_Completed')?['body']?['attachments']",
+          "actions": {
+            "HTTP-Get_Genie_Answer": {
+              "type": "Http",
+              "inputs": {
+                "uri": "https://adb-1640284889362556.16.azuredatabricks.net/api/2.0/genie/spaces/01f032919f9f1917a3bd0991448dd756/conversations/@{variables('varGenieConvoId')}/messages/@{variables('varGenieMessageId')}/query-result/@{items('For_each')?['attachment_id']}",
+                "method": "GET",
+                "headers": {
+                  "Authorization": "Bearer @{parameters('Genie Bearer (veh_GenieBearer)')}",
+                  "Content-Type": "application/json"
+                },
+                "queries": {
+                  "title": "hello"
+                }
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              },
+              "metadata": {
+                "operationMetadataId": "900b469e-92b7-4389-ba25-d8921cd499c0"
+              }
+            },
+            "Set_variable_varGenieResponseStatus_for_CPS": {
+              "type": "SetVariable",
+              "inputs": {
+                "name": "varGenieResponseStatus",
+                "value": "@string(body('HTTP-Get_Genie_Answer')) "
+              },
+              "runAfter": {
+                "HTTP-Get_Genie_Answer": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "0fd9147d-c706-4f25-8418-c63cc9bc0e39"
+              }
+            }
+          },
+          "runAfter": {
+            "Parse_JSON_Genie_Completed": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "f79b66db-7dff-4324-975e-3e5bd6f4561f"
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response",
+          "kind": "Skills",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "genie_response": {
+                  "title": "Genie Response",
+                  "x-ms-dynamically-added": true,
+                  "type": "string",
+                  "description": "sample response from Genie is text in json format"
+                },
+                "genie_conversation_id": {
+                  "title": "Genie Conversation Id",
+                  "x-ms-dynamically-added": true,
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {}
+            },
+            "statusCode": 200,
+            "body": {
+              "genie_response": "@{variables('varGenieResponseStatus')}",
+              "genie_conversation_id": "@variables('varGenieConvoId')"
+            }
+          },
+          "runAfter": {
+            "For_each": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "64539775-6c5c-4294-b108-9998958eb5f9"
+          }
+        },
+        "Condition_Genie_Convo_Id_is_Null": {
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@triggerBody()?['text_1']",
+                  "@null"
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "HTTP-Start_Genie_Convo_Cond": {
+              "type": "Http",
+              "description": "https://adb-1640284889362556.16.azuredatabricks.net/api/2.0/genie/spaces/01f032919f9f1917a3bd0991448dd756/start-conversation",
+              "inputs": {
+                "uri": "https://@{parameters('Genie Base Url (veh_GenieBaseUrl)')}/api/2.0/genie/spaces/@{parameters('Genie Space Id (veh_GenieSpaceId)')}/start-conversation",
+                "method": "POST",
+                "headers": {
+                  "Authorization": "Bearer @{parameters('Genie Bearer (veh_GenieBearer)')}",
+                  "Content-Type": "application/json"
+                },
+                "queries": {
+                  "title": "hello"
+                },
+                "body": {
+                  "content": "@{triggerBody()?['text']}"
+                }
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              },
+              "metadata": {
+                "operationMetadataId": "770c2491-a53d-4516-8cca-ef4dca053455"
+              }
+            },
+            "Parse_HTTP_Response_Start_Convo": {
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('HTTP-Start_Genie_Convo_Cond')",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message_id": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "space_id": {
+                          "type": "string"
+                        },
+                        "conversation_id": {
+                          "type": "string"
+                        },
+                        "user_id": {
+                          "type": "integer"
+                        },
+                        "created_timestamp": {
+                          "type": "integer"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "auto_regenerate_count": {
+                          "type": "integer"
+                        },
+                        "message_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "conversation_id": {
+                      "type": "string"
+                    },
+                    "conversation": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "space_id": {
+                          "type": "string"
+                        },
+                        "user_id": {
+                          "type": "integer"
+                        },
+                        "created_timestamp": {
+                          "type": "integer"
+                        },
+                        "last_updated_timestamp": {
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "conversation_id": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "HTTP-Start_Genie_Convo_Cond": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "3f85d910-15e7-4b18-b528-2ea6c9560c27"
+              }
+            },
+            "Set_varGenieMessageId_Start_Convo": {
+              "type": "SetVariable",
+              "inputs": {
+                "name": "varGenieMessageId",
+                "value": "@body('Parse_HTTP_Response_Start_Convo')?['message_id']"
+              },
+              "runAfter": {
+                "Parse_HTTP_Response_Start_Convo": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Set_varGenieConvoId_Start_Convo": {
+              "type": "SetVariable",
+              "inputs": {
+                "name": "varGenieConvoId",
+                "value": "@body('Parse_HTTP_Response_Start_Convo')?['conversation']?['conversation_id']"
+              },
+              "runAfter": {
+                "Set_varGenieMessageId_Start_Convo": [
+                  "Succeeded"
+                ]
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Set_varGenieMessageId_Follow-up_Convo": {
+                "type": "SetVariable",
+                "inputs": {
+                  "name": "varGenieMessageId",
+                  "value": "@body('Parse_HTTP_Response_Follow-up_Convo')?['message_id']"
+                },
+                "runAfter": {
+                  "Parse_HTTP_Response_Follow-up_Convo": [
+                    "Succeeded"
+                  ]
+                }
+              },
+              "HTTP-Genie_Follow-up_Convo_Cond": {
+                "type": "Http",
+                "description": "https://adb-1640284889362556.16.azuredatabricks.net/api/2.0/genie/spaces/01f032919f9f1917a3bd0991448dd756/start-conversation",
+                "inputs": {
+                  "uri": "https://@{parameters('Genie Base Url (veh_GenieBaseUrl)')}/api/2.0/genie/spaces/@{parameters('Genie Space Id (veh_GenieSpaceId)')}/conversations/@{variables('varGenieConvoId')}/messages",
+                  "method": "POST",
+                  "headers": {
+                    "Authorization": "Bearer @{parameters('Genie Bearer (veh_GenieBearer)')}",
+                    "Content-Type": "application/json"
+                  },
+                  "queries": {
+                    "title": "hello"
+                  },
+                  "body": {
+                    "content": "@{triggerBody()?['text']}"
+                  }
+                },
+                "runtimeConfiguration": {
+                  "contentTransfer": {
+                    "transferMode": "Chunked"
+                  }
+                },
+                "metadata": {
+                  "operationMetadataId": "770c2491-a53d-4516-8cca-ef4dca053455"
+                }
+              },
+              "Parse_HTTP_Response_Follow-up_Convo": {
+                "type": "ParseJson",
+                "inputs": {
+                  "content": "@body('HTTP-Genie_Follow-up_Convo_Cond')",
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message_id": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "space_id": {
+                            "type": "string"
+                          },
+                          "conversation_id": {
+                            "type": "string"
+                          },
+                          "user_id": {
+                            "type": "integer"
+                          },
+                          "created_timestamp": {
+                            "type": "integer"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "auto_regenerate_count": {
+                            "type": "integer"
+                          },
+                          "message_id": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "conversation_id": {
+                        "type": "string"
+                      },
+                      "conversation": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "space_id": {
+                            "type": "string"
+                          },
+                          "user_id": {
+                            "type": "integer"
+                          },
+                          "created_timestamp": {
+                            "type": "integer"
+                          },
+                          "last_updated_timestamp": {
+                            "type": "integer"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "conversation_id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "runAfter": {
+                  "HTTP-Genie_Follow-up_Convo_Cond": [
+                    "Succeeded"
+                  ]
+                },
+                "metadata": {
+                  "operationMetadataId": "3f85d910-15e7-4b18-b528-2ea6c9560c27"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Initialize_variable_varGenieResponseStatus": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "cc16807e-d0ea-4cb2-809d-df6b7ed906d2"
+          }
+        },
+        "Initialize_varGenieConvoId": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varGenieConvoId",
+                "type": "string",
+                "value": "@triggerBody()['text_1']"
+              }
+            ]
+          },
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "0d82043a-2645-45de-b2c9-8d5baf4ee99c"
+          }
+        },
+        "Initialize_varGenieMessageId_null": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varGenieMessageId",
+                "type": "string",
+                "value": "@null"
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_varGenieConvoId": [
+              "Succeeded"
+            ]
+          }
+        },
+        "Initialize_variable_varGenieResponseStatus": {
+          "type": "InitializeVariable",
+          "inputs": {
+            "variables": [
+              {
+                "name": "varGenieResponseStatus",
+                "type": "string",
+                "value": "blank"
+              }
+            ]
+          },
+          "runAfter": {
+            "Initialize_varGenieMessageId_null": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "a7bacf7d-e291-45bc-b072-73645fe4ae20"
+          }
+        }
+      },
+      "outputs": {},
+      "description": "The flow receives input from the user in CPS and passes it the Genie API and returns the response in full json format."
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

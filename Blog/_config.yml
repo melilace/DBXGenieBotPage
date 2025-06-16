@@ -1,0 +1,5 @@
+theme:caymanremote_theme: pages-themes/cayman@v0.2.0
+plugins:
+- jekyll-remote-theme # add this line to the plugins list if you already have one
+title: AI Agentics Insights
+description: This post kicks off our AI Agentics Insights series, where we spotlight tools and innovations that make data more accessible and actionable for everyone.
